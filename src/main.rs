@@ -1,5 +1,7 @@
 use std::env;
 pub mod day1;
+pub mod utils;
+
 
 fn main() {
 
@@ -7,8 +9,11 @@ fn main() {
     if args.len() != 2 {
         panic!("File with input is not provided");
     }
-
-    // println!("Sum of needed fuel is: {}", day1::solution(&args[1]));
+    if let Ok(lines) = utils::read_lines(&args[1]) {
+        println!("Sum of needed fuel is: {}", day1::solution(lines));
+    }
+    else {
+        panic!("Cannot read the file");
+    }
 }
-
 
