@@ -1,5 +1,6 @@
 use std::env;
-pub mod day1;
+//pub mod day1;
+pub mod day2;
 pub mod utils;
 
 
@@ -10,7 +11,8 @@ fn main() {
         panic!("File with input is not provided");
     }
     if let Ok(lines) = utils::read_lines(&args[1]) {
-        println!("Sum of needed fuel is: {}", day1::solution(lines));
+        //println!("Sum of needed fuel is: {}", day1::solution(lines));
+        day2::solution(lines);
     }
     else {
         panic!("Cannot read the file");
