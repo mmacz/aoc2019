@@ -1,6 +1,14 @@
+use std::env;
 use std::fs::File;
-use std::io::{self};
+use std::io::{self, BufRead};
+use std::path::Path;
 use std::str::FromStr;
+
+pub fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
+where P: AsRef<Path>, {
+    let file = File::open(filename)?;
+    Ok(io::BufReader::new(file).lines())
+}
 
 fn intcode_decode(code: &mut Vec<i32>) -> Vec<i32> {
     let mut idx = 0;
@@ -22,7 +30,7 @@ fn intcode_decode(code: &mut Vec<i32>) -> Vec<i32> {
     return code.clone();
 }
 
-pub fn solution(input: io::Lines<io::BufReader<File>>) -> ()
+fn solution(input: io::Lines<io::BufReader<File>>) -> ()
 {
     for line in input.flatten() {
         // always 1 line
@@ -44,5 +52,15 @@ pub fn solution(input: io::Lines<io::BufReader<File>>) -> ()
                 }
             }
         }
+    }
+}
+
+fn main() {
+    let args: Vec<String> = env::args().collect();
+    if args.len() != 2 {
+        panic!("File with input is not provided");
+    }
+    if let Ok(lines) = read_lines(&args[1]) {
+        solution(lines);
     }
 }

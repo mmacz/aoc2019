@@ -66,8 +66,12 @@ fn puzzle_check(can_group: bool) -> u32 {
     valid_count
 }
 
-pub fn solution() -> () {
+fn solution() -> () {
     sanity_checks();
     println!("Answer 1: {}", puzzle_check(true));
     println!("Answer 2: {}", puzzle_check(false));
+}
+
+fn main() {
+    solution();
 }

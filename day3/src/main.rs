@@ -1,6 +1,8 @@
-use std::io::{self};
+use std::env;
 use std::fs::File;
 use std::str::FromStr;
+use std::io::{self, BufRead};
+use std::path::Path;
 use std::collections::HashMap;
 
 struct Coords {
@@ -58,6 +60,12 @@ impl Point {
             y: y
         }
     }
+}
+
+pub fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
+where P: AsRef<Path>, {
+    let file = File::open(filename)?;
+    Ok(io::BufReader::new(file).lines())
 }
 
 fn collect_lines(wire: &Vec<Coords>) -> (Vec<Line>, Vec<Line>) {
@@ -128,7 +136,7 @@ fn build_key(x: i32, y: i32) -> u64 {
 
 fn get_min_steps(wires: &Vec<Vec<Coords>>, intersections: &Vec<Point>) -> u64 {
     let mut steps: HashMap<u64, u32> = HashMap::new();
-    let mut key: u64 = 0;
+    let mut key;
     for wire in wires {
         let mut x: i32 = 0;
         let mut y: i32 = 0;
@@ -165,7 +173,7 @@ fn get_min_steps(wires: &Vec<Vec<Coords>>, intersections: &Vec<Point>) -> u64 {
     min_steps
 }
 
-pub fn solution(input: io::Lines<io::BufReader<File>>) -> () {
+fn solution(input: io::Lines<io::BufReader<File>>) -> () {
     let mut wires: Vec<Vec<Coords>> = Vec::new();
     for line in input.flatten() {
         let coords: Vec<Coords> = line.split(",")
@@ -184,3 +192,12 @@ pub fn solution(input: io::Lines<io::BufReader<File>>) -> () {
     println!("Answer 2: {}", get_min_steps(&wires, &intersections));
 }
 
+fn main() {
+    let args: Vec<String> = env::args().collect();
+    if args.len() != 2 {
+        panic!("File with input is not provided");
+    }
+    if let Ok(lines) = read_lines(&args[1]) {
+        solution(lines);
+    }
+}
