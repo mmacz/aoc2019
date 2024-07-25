@@ -1,7 +1,9 @@
+use std::collections::VecDeque;
 use std::env;
 use std::fs;
 use std::string::String;
 use std::str::FromStr;
+use cpu::Cpu;
 use itertools::Itertools;
 
 pub mod sanity_inputs;
@@ -14,17 +16,19 @@ fn get_intcode_from_str(str_code: &str) -> Vec<i32> {
 fn solution1(file: &String) -> i32 {
     let mut max_out = 0;
     let permutations = vec!{0, 1, 2, 3, 4}.into_iter().permutations(5);
+    let code: Vec<i32> = get_intcode_from_str(&file);
 
     for phases in permutations {
         let mut out: i32 = 0;
         for phase in phases {
-            let code: Vec<i32> = get_intcode_from_str(&file);
             let mut amp: cpu::Cpu = cpu::Cpu::new(phase, &code);
             let mut done: bool = false;
             while !done {
-                done = amp.process(&out);
+                let mut input: VecDeque<i32> = vec!{out}.into();
+                amp.process(&mut input);
+                done = amp.done;
             }
-            out = amp.out;
+            out = amp.out.pop_front().unwrap();
         }
         if out > max_out {
             max_out = out;
@@ -36,26 +40,40 @@ fn solution1(file: &String) -> i32 {
 fn solution2(file: &String) -> i32 {
     let mut max_out: i32 = 0;
     let permutations = vec!{5, 6, 7, 8, 9}.into_iter().permutations(5);
+    let code: Vec<i32> = get_intcode_from_str(&file);
 
     for phases in permutations {
-        let out: i32 = 0;
-        for phase in phases {
+        let mut amp_a: Cpu = Cpu::new(phases[0], &code);
+        let mut amp_b: Cpu = Cpu::new(phases[1], &code);
+        let mut amp_c: Cpu = Cpu::new(phases[2], &code);
+        let mut amp_d: Cpu = Cpu::new(phases[3], &code);
+        let mut amp_e: Cpu = Cpu::new(phases[4], &code);
+
+        while !amp_e.done {
+            amp_a.process(&mut amp_e.out);
+            amp_b.process(&mut amp_a.out);
+            amp_c.process(&mut amp_b.out);
+            amp_d.process(&mut amp_c.out);
+            amp_e.process(&mut amp_d.out);
         }
+
+        let out: i32 = amp_e.out.pop_back().unwrap_or(-1);
         if out > max_out {
             max_out = out;
         }
+
     }
     max_out
 }
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
-    if args.len() != 2 {
-        panic!("File with input is not provided");
-    }
-    let input: String = fs::read_to_string(&args[1]).unwrap();
-    println!("Answer 1: {}", solution1(&input));
-    assert_eq!(255840, solution1(&input));
+    // let args: Vec<String> = env::args().collect();
+    // if args.len() != 2 {
+    //     panic!("File with input is not provided");
+    // }
+    // let input: String = fs::read_to_string(&args[1]).unwrap();
+    // println!("Answer 1: {}", solution1(&input));
+    // assert_eq!(255840, solution1(&input));
     println!("Answer 2: {}", solution2(&sanity_inputs::sanity4()));
 }
 

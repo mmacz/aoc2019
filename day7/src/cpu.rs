@@ -1,6 +1,9 @@
+use std::collections::VecDeque;
+
 
 pub struct Cpu {
-    pub out: i32,
+    pub out: VecDeque<i32>,
+    pub done: bool,
     
     code: Vec<i32>,
     phase: i32,
@@ -11,7 +14,8 @@ pub struct Cpu {
 impl Cpu {
     pub fn new(phase: i32, code: &Vec<i32>) -> Cpu {
         return Cpu{
-            out: 0,
+            out: vec!{0}.into(),
+            done: false,
             code: code.to_vec(),
             phase: phase,
             pc: 0,
@@ -19,11 +23,15 @@ impl Cpu {
         };
     }
 
-    pub fn process(&mut self, input: &i32) -> bool {
-        let mut done: bool = false;
+    pub fn rewind_pc(&mut self) -> () {
+        self.pc = 0;
+        self.done = false;
+    }
 
+    pub fn process(&mut self, input: &mut VecDeque<i32>) -> () {
         if self.pc >= self.code.len() {
-            return true; // done
+            self.done = true;
+            return;
         }
 
         let mut code: i32 = self.code[self.pc];
@@ -51,10 +59,10 @@ impl Cpu {
                 let param: i32;
                 match self.phase_registered {
                     false => { param = self.phase; self.phase_registered = true; },
-                    true => param = *input,
+                    true => { param = input.pop_front().unwrap_or(-1); self.phase_registered = false; },
                 }
                 if param == -1 {
-                    return false;
+                    return;
                 }
                 let op1: usize = self.get_operand_by_mode(1, 1) as usize;
                 self.code[op1] = param;
@@ -62,7 +70,7 @@ impl Cpu {
             },
             4 => { // rd
                 let op1: usize = self.get_operand_by_mode(1, 1) as usize;
-                self.out = self.code[op1];
+                self.out.push_back(self.code[op1]);
                 self.pc += 2;
             },
             5 => { //jt
@@ -96,12 +104,10 @@ impl Cpu {
                 self.pc += 4;
             },
             99 => { // stop
-                done = true
+                self.done = true;
             }
             _ => panic!("Unknown opcode: {}", opcode),
         }
-
-        done // not done
     }
 
     fn parse_code(&mut self, code: &mut i32, digits: i32) -> i32 {
