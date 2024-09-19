@@ -24,11 +24,11 @@ fn solution1(file: &String) -> i32 {
             let mut amp: cpu::Cpu = cpu::Cpu::new(phase, &code);
             let mut done: bool = false;
             while !done {
-                let mut input: VecDeque<i32> = vec!{out}.into();
-                amp.process(&mut input);
+                let input: i32 = out;
+                amp.process(input);
                 done = amp.done;
             }
-            out = amp.out.pop_front().unwrap();
+            out = amp.out;
         }
         if out > max_out {
             max_out = out;
@@ -41,6 +41,7 @@ fn solution2(file: &String) -> i32 {
     let mut max_out: i32 = 0;
     let permutations = vec!{5, 6, 7, 8, 9}.into_iter().permutations(5);
     let code: Vec<i32> = get_intcode_from_str(&file);
+    
 
     for phases in permutations {
         let mut amp_a: Cpu = Cpu::new(phases[0], &code);
@@ -49,15 +50,21 @@ fn solution2(file: &String) -> i32 {
         let mut amp_d: Cpu = Cpu::new(phases[3], &code);
         let mut amp_e: Cpu = Cpu::new(phases[4], &code);
 
-        while !amp_e.done {
-            amp_a.process(&mut amp_e.out);
-            amp_b.process(&mut amp_a.out);
-            amp_c.process(&mut amp_b.out);
-            amp_d.process(&mut amp_c.out);
-            amp_e.process(&mut amp_d.out);
+        // Forced A input
+        amp_e.out = 0;
+        while  !amp_a.done 
+            && !amp_b.done
+            && !amp_c.done
+            && !amp_d.done
+            && !amp_e.done {
+                amp_a.process(amp_e.out);
+                amp_b.process(amp_a.out);
+                amp_c.process(amp_b.out);
+                amp_d.process(amp_c.out);
+                amp_e.process(amp_d.out);
         }
 
-        let out: i32 = amp_e.out.pop_back().unwrap_or(-1);
+        let out: i32 = amp_e.out;
         if out > max_out {
             max_out = out;
         }
@@ -67,13 +74,14 @@ fn solution2(file: &String) -> i32 {
 }
 
 fn main() {
+    assert_eq!(43210, solution1(&sanity_inputs::sanity1()));
+    assert_eq!(139629729, solution2(&sanity_inputs::sanity4()));
+
     // let args: Vec<String> = env::args().collect();
     // if args.len() != 2 {
     //     panic!("File with input is not provided");
     // }
     // let input: String = fs::read_to_string(&args[1]).unwrap();
-    // println!("Answer 1: {}", solution1(&input));
-    // assert_eq!(255840, solution1(&input));
-    println!("Answer 2: {}", solution2(&sanity_inputs::sanity4()));
+    //println!("Answer 1: {}", solution1(&input));
 }
 

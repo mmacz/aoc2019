@@ -1,8 +1,6 @@
-use std::collections::VecDeque;
-
 
 pub struct Cpu {
-    pub out: VecDeque<i32>,
+    pub out: i32,
     pub done: bool,
     
     code: Vec<i32>,
@@ -14,7 +12,7 @@ pub struct Cpu {
 impl Cpu {
     pub fn new(phase: i32, code: &Vec<i32>) -> Cpu {
         return Cpu{
-            out: vec!{0}.into(),
+            out: 0,
             done: false,
             code: code.to_vec(),
             phase: phase,
@@ -28,7 +26,7 @@ impl Cpu {
         self.done = false;
     }
 
-    pub fn process(&mut self, input: &mut VecDeque<i32>) -> () {
+    pub fn process(&mut self, input: i32) -> () {
         if self.pc >= self.code.len() {
             self.done = true;
             return;
@@ -58,11 +56,13 @@ impl Cpu {
             3 => { // ld
                 let param: i32;
                 match self.phase_registered {
-                    false => { param = self.phase; self.phase_registered = true; },
-                    true => { param = input.pop_front().unwrap_or(-1); self.phase_registered = false; },
-                }
-                if param == -1 {
-                    return;
+                    false => {
+                        param = self.phase;
+                        self.phase_registered = true;
+                    },
+                    _ => {
+                        param = input;
+                    }
                 }
                 let op1: usize = self.get_operand_by_mode(1, 1) as usize;
                 self.code[op1] = param;
@@ -70,7 +70,7 @@ impl Cpu {
             },
             4 => { // rd
                 let op1: usize = self.get_operand_by_mode(1, 1) as usize;
-                self.out.push_back(self.code[op1]);
+                self.out = self.code[op1];
                 self.pc += 2;
             },
             5 => { //jt
