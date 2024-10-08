@@ -11,12 +11,15 @@ fn get_intcode_from_str(str_code: &str) -> Vec<i32> {
 fn solution1(input: &str) -> () {
     let code = get_intcode_from_str(input);
     let mut cpu = cpu::Cpu::new(&code);
+    cpu.run();
 }
 
 fn solution2(input: &str) -> () {
 }
 
 fn main() {
-    println!("Answer 1: {:?}", solution1(&sanity_inputs::sanity1()));
+    solution1(&sanity_inputs::sanity1());
+    solution1(&sanity_inputs::sanity2());
+    solution1(&sanity_inputs::sanity3());
 }
 
