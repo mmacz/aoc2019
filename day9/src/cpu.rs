@@ -26,9 +26,12 @@ impl Cpu {
 
 
     pub fn run_for_output(&mut self) -> i64 {
-        match self.step() {
-            CpuStatus::Output(x) => x,
-            _ => panic!("Process should have an output")
+        loop {
+            match self.step() {
+                CpuStatus::Output(x) => return x,
+                CpuStatus::Finished => panic!("Process should have an output"),
+                _ => continue,
+            }
         }
     }
 
