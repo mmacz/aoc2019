@@ -3,7 +3,10 @@ use std::str::FromStr;
 pub mod cpu;
 
 fn get_intcode_from_str(str_code: &str) -> Vec<i64> {
-    str_code.split(",").filter_map(|c| i64::from_str(c).ok()).collect()
+    str_code
+        .split(",")
+        .filter_map(|c| i64::from_str(c).ok())
+        .collect()
 }
 
 fn sanity_check(input: &str, idx: usize) -> i32 {
@@ -23,10 +26,10 @@ fn solution(program: &str, program_input: i64) -> i64 {
 }
 
 fn main() {
-     let sanity_inputs: Vec<String> = vec![
+    let sanity_inputs: Vec<String> = vec![
         "109,1,204,-1,1001,100,1,100,1008,100,16,101,1006,101,0,99".to_string(),
         "1102,34915192,34915192,7,4,7,99,0".to_string(),
-        "104,1125899906842624,99".to_string()
+        "104,1125899906842624,99".to_string(),
     ];
     let _: Vec<i32> = sanity_inputs
         .iter()
@@ -38,4 +41,3 @@ fn main() {
     println!("Answer 1: {:?}", solution(&puzzle_input, 1));
     println!("Answer 2: {:?}", solution(&puzzle_input, 2));
 }
-

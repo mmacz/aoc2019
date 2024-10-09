@@ -1,26 +1,25 @@
+use std::collections::HashMap;
 use std::env;
 use std::fs::File;
-use std::str::FromStr;
 use std::io::{self, BufRead};
 use std::path::Path;
-use std::collections::HashMap;
+use std::str::FromStr;
 
 struct Coords {
     dir: i32,
     steps: i32,
-    is_vert: bool
+    is_vert: bool,
 }
 
 struct Line {
     coord: i32,
-    tuple: (i32, i32)
+    tuple: (i32, i32),
 }
-
 
 #[derive(Clone)]
 struct Point {
     x: i32,
-    y: i32
+    y: i32,
 }
 
 impl Coords {
@@ -30,9 +29,9 @@ impl Coords {
         let steps: i32 = i32::from_str(&entry[1..]).unwrap();
         let is_vert: bool = d == 'U' || d == 'D';
         Coords {
-            dir: direction, 
+            dir: direction,
             steps: steps,
-            is_vert: is_vert
+            is_vert: is_vert,
         }
     }
 }
@@ -48,22 +47,21 @@ impl Line {
         }
         Line {
             coord: coord,
-            tuple: (t1, t2)
+            tuple: (t1, t2),
         }
     }
 }
 
 impl Point {
     pub fn new(x: i32, y: i32) -> Self {
-        Point {
-            x: x,
-            y: y
-        }
+        Point { x: x, y: y }
     }
 }
 
 pub fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
-where P: AsRef<Path>, {
+where
+    P: AsRef<Path>,
+{
     let file = File::open(filename)?;
     Ok(io::BufReader::new(file).lines())
 }
@@ -79,8 +77,7 @@ fn collect_lines(wire: &Vec<Coords>) -> (Vec<Line>, Vec<Line>) {
         if w.is_vert {
             vertical_lines.push(Line::new(x, (y, y + shift)));
             y += shift;
-        }
-        else {
+        } else {
             horizontal_lines.push(Line::new(y, (x, x + shift)));
             x += shift;
         }
@@ -97,7 +94,9 @@ fn get_intersections(horizontal: &Vec<Line>, vertical: &Vec<Line>) -> Vec<Point>
     let mut intersections: Vec<Point> = Vec::new();
     for h in horizontal {
         for v in vertical {
-            if is_in_range(h.tuple.0, h.tuple.1, v.coord) && is_in_range(v.tuple.0, v.tuple.1, h.coord) {
+            if is_in_range(h.tuple.0, h.tuple.1, v.coord)
+                && is_in_range(v.tuple.0, v.tuple.1, h.coord)
+            {
                 intersections.push(Point::new(h.coord, v.coord));
             }
         }
@@ -145,8 +144,7 @@ fn get_min_steps(wires: &Vec<Vec<Coords>>, intersections: &Vec<Point>) -> u64 {
             for _s in 0..c.steps {
                 if c.is_vert {
                     y += c.dir;
-                }
-                else {
+                } else {
                     x += c.dir;
                 }
                 step += 1;
@@ -155,8 +153,7 @@ fn get_min_steps(wires: &Vec<Vec<Coords>>, intersections: &Vec<Point>) -> u64 {
                     if steps.contains_key(&key) {
                         let new_step = steps.get(&key).unwrap() + step;
                         steps.insert(key, new_step);
-                    }
-                    else {
+                    } else {
                         steps.insert(key, step);
                     }
                 }
@@ -176,9 +173,7 @@ fn get_min_steps(wires: &Vec<Vec<Coords>>, intersections: &Vec<Point>) -> u64 {
 fn solution(input: io::Lines<io::BufReader<File>>) -> () {
     let mut wires: Vec<Vec<Coords>> = Vec::new();
     for line in input.flatten() {
-        let coords: Vec<Coords> = line.split(",")
-                       .map(|s: &str| Coords::new(s))
-                       .collect();
+        let coords: Vec<Coords> = line.split(",").map(|s: &str| Coords::new(s)).collect();
         wires.push(coords);
     }
 

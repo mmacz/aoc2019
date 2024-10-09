@@ -1,14 +1,15 @@
+use std::collections::HashMap;
 use std::env;
 use std::fs;
 use std::string::String;
-use std::collections::HashMap;
 
 fn count(map: &HashMap<&str, &str>, item: &str) -> usize {
     map.get(item).map(|item| count(map, item) + 1).unwrap_or(0)
 }
 
 fn get_orbit_map(content: &String) -> HashMap<&str, &str> {
-    let map: HashMap<&str, &str> = content.lines()
+    let map: HashMap<&str, &str> = content
+        .lines()
         .map(|line| line.split(")").collect::<Vec<&str>>())
         .fold(HashMap::new(), |mut map, po| {
             map.insert(po[1], po[0]);
@@ -50,4 +51,3 @@ fn main() {
     println!("Answer 1: {}", orbit_count_checksum(&file));
     println!("Answet 2: {}", distance(&file, "YOU", "SAN"));
 }
-

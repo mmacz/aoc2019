@@ -1,6 +1,11 @@
 use std::collections::VecDeque;
 
-pub enum CpuStatus { Output(i32), WaitForInput, Finished, Running }
+pub enum CpuStatus {
+    Output(i32),
+    WaitForInput,
+    Finished,
+    Running,
+}
 
 #[derive(Clone)]
 pub struct Cpu {
@@ -11,7 +16,7 @@ pub struct Cpu {
 
 impl Cpu {
     pub fn new(code: &Vec<i32>) -> Cpu {
-        return Cpu{
+        return Cpu {
             code: code.to_vec(),
             pc: 0,
             input: VecDeque::new(),
@@ -25,7 +30,7 @@ impl Cpu {
     pub fn process_for_output(&mut self) -> i32 {
         match self.process() {
             CpuStatus::Output(x) => x,
-            _ => panic!("Process should have an output")
+            _ => panic!("Process should have an output"),
         }
     }
 
@@ -38,67 +43,76 @@ impl Cpu {
             let _op3_mode: i32 = self.parse_code(&mut code, 10);
 
             match opcode {
-                1 => { // add
+                1 => {
+                    // add
                     let op1: i32 = self.get_operand_by_mode(op1_mode, 1);
                     let op2: i32 = self.get_operand_by_mode(op2_mode, 2);
                     let op3: i32 = self.get_operand_by_mode(1, 3);
                     self.code[op3 as usize] = op1 + op2;
                     self.pc += 4;
-                },
-                2 => { // mul
+                }
+                2 => {
+                    // mul
                     let op1: i32 = self.get_operand_by_mode(op1_mode, 1);
                     let op2: i32 = self.get_operand_by_mode(op2_mode, 2);
                     let op3: i32 = self.get_operand_by_mode(1, 3);
                     self.code[op3 as usize] = op1 * op2;
                     self.pc += 4;
-                },
-                3 => { // ld
+                }
+                3 => {
+                    // ld
                     let param: i32;
                     match self.input.pop_front() {
                         Some(x) => param = x,
-                        None => return CpuStatus::WaitForInput
+                        None => return CpuStatus::WaitForInput,
                     }
                     let op1: usize = self.get_operand_by_mode(1, 1) as usize;
                     self.code[op1] = param;
                     self.pc += 2;
-                },
-                4 => { // rd
+                }
+                4 => {
+                    // rd
                     let op1: usize = self.get_operand_by_mode(1, 1) as usize;
                     self.pc += 2;
                     return CpuStatus::Output(self.code[op1]);
-                },
-                5 => { //jt
+                }
+                5 => {
+                    //jt
                     let op1: i32 = self.get_operand_by_mode(op1_mode, 1);
                     let op2: i32 = self.get_operand_by_mode(op2_mode, 2);
                     match op1 {
                         0 => self.pc += 3,
-                        _ => self.pc = op2 as usize
+                        _ => self.pc = op2 as usize,
                     }
-                },
-                6 => { // jf
+                }
+                6 => {
+                    // jf
                     let op1: i32 = self.get_operand_by_mode(op1_mode, 1);
                     let op2: i32 = self.get_operand_by_mode(op2_mode, 2);
                     match op1 {
                         0 => self.pc = op2 as usize,
                         _ => self.pc += 3,
                     }
-                },
-                7 => { // lt
+                }
+                7 => {
+                    // lt
                     let op1: i32 = self.get_operand_by_mode(op1_mode, 1);
                     let op2: i32 = self.get_operand_by_mode(op2_mode, 2);
                     let op3: i32 = self.get_operand_by_mode(1, 3);
                     self.code[op3 as usize] = if op1 < op2 { 1 } else { 0 };
                     self.pc += 4;
-                },
-                8 => { // eq
+                }
+                8 => {
+                    // eq
                     let op1: i32 = self.get_operand_by_mode(op1_mode, 1);
                     let op2: i32 = self.get_operand_by_mode(op2_mode, 2);
                     let op3: i32 = self.get_operand_by_mode(1, 3);
                     self.code[op3 as usize] = if op1 == op2 { 1 } else { 0 };
                     self.pc += 4;
-                },
-                99 => { // stop
-                    return CpuStatus::Finished
+                }
+                99 => {
+                    // stop
+                    return CpuStatus::Finished;
                 }
                 _ => panic!("Unknown opcode: {}", opcode),
             }
@@ -117,7 +131,7 @@ impl Cpu {
             0 => {
                 op = self.code[self.pc + op_idx];
                 op = self.code[op as usize];
-            },
+            }
             1 => {
                 op = self.code[self.pc + op_idx];
             }

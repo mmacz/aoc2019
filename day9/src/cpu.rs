@@ -1,6 +1,11 @@
 use std::collections::VecDeque;
 
-pub enum CpuStatus { Output(i64), WaitForInput, Finished, Running }
+pub enum CpuStatus {
+    Output(i64),
+    WaitForInput,
+    Finished,
+    Running,
+}
 
 #[derive(Clone)]
 pub struct Cpu {
@@ -12,7 +17,7 @@ pub struct Cpu {
 
 impl Cpu {
     pub fn new(code: &Vec<i64>) -> Cpu {
-        return Cpu{
+        return Cpu {
             code: code.to_vec(),
             pc: 0,
             input: VecDeque::new(),
@@ -41,7 +46,7 @@ impl Cpu {
                 CpuStatus::Finished => break,
                 _ => continue,
             }
-        };
+        }
     }
 
     pub fn step(&mut self) -> CpuStatus {
@@ -52,77 +57,86 @@ impl Cpu {
         let op3_mode = self.parse_code(&mut code, 10);
 
         match opcode {
-            1 => { // add
+            1 => {
+                // add
                 let op1 = self.get_operand_by_mode(op1_mode, 1);
                 let op2 = self.get_operand_by_mode(op2_mode, 2);
                 let op3: usize = self.get_address_by_mode(op3_mode, 3);
                 self.ensure_memory(op3);
                 self.code[op3] = op1 + op2;
                 self.pc += 4;
-            },
-            2 => { // mul
+            }
+            2 => {
+                // mul
                 let op1 = self.get_operand_by_mode(op1_mode, 1);
                 let op2 = self.get_operand_by_mode(op2_mode, 2);
                 let op3: usize = self.get_address_by_mode(op3_mode, 3);
                 self.ensure_memory(op3);
                 self.code[op3] = op1 * op2;
                 self.pc += 4;
-            },
-            3 => { // ld
+            }
+            3 => {
+                // ld
                 let param;
                 match self.input.pop_front() {
                     Some(x) => param = x,
-                    None => return CpuStatus::WaitForInput
+                    None => return CpuStatus::WaitForInput,
                 }
                 let op1: usize = self.get_address_by_mode(op1_mode, 1) as usize;
                 self.ensure_memory(op1);
                 self.code[op1] = param;
                 self.pc += 2;
-            },
-            4 => { // rd
+            }
+            4 => {
+                // rd
                 let op1 = self.get_operand_by_mode(op1_mode, 1);
                 self.pc += 2;
                 return CpuStatus::Output(op1 as i64);
-            },
-            5 => { //jt
+            }
+            5 => {
+                //jt
                 let op1 = self.get_operand_by_mode(op1_mode, 1);
                 let op2 = self.get_operand_by_mode(op2_mode, 2);
                 match op1 {
                     0 => self.pc += 3,
-                    _ => self.pc = op2 as usize
+                    _ => self.pc = op2 as usize,
                 }
-            },
-            6 => { // jf
+            }
+            6 => {
+                // jf
                 let op1 = self.get_operand_by_mode(op1_mode, 1);
                 let op2 = self.get_operand_by_mode(op2_mode, 2);
                 match op1 {
                     0 => self.pc = op2 as usize,
                     _ => self.pc += 3,
                 }
-            },
-            7 => { // lt
+            }
+            7 => {
+                // lt
                 let op1 = self.get_operand_by_mode(op1_mode, 1);
                 let op2 = self.get_operand_by_mode(op2_mode, 2);
                 let op3: usize = self.get_address_by_mode(op3_mode, 3);
                 self.ensure_memory(op3);
                 self.code[op3] = if op1 < op2 { 1 } else { 0 };
                 self.pc += 4;
-            },
-            8 => { // eq
+            }
+            8 => {
+                // eq
                 let op1 = self.get_operand_by_mode(op1_mode, 1);
                 let op2 = self.get_operand_by_mode(op2_mode, 2);
                 let op3: usize = self.get_address_by_mode(op3_mode, 3);
                 self.ensure_memory(op3);
                 self.code[op3] = if op1 == op2 { 1 } else { 0 };
                 self.pc += 4;
-            },
+            }
             9 => {
                 let op1 = self.get_operand_by_mode(op1_mode, 1);
                 self.relative_base += op1;
                 self.pc += 2;
-            },
-            99 => { // stop
-                return CpuStatus::Finished
+            }
+            99 => {
+                // stop
+                return CpuStatus::Finished;
             }
             _ => panic!("Unknown opcode: {}", opcode),
         }
@@ -141,15 +155,13 @@ impl Cpu {
                 let idx = self.code[self.pc + op_idx] as usize;
                 self.ensure_memory(idx);
                 self.code[idx]
-            },
-            1 => {
-                self.code[self.pc + op_idx]
-            },
+            }
+            1 => self.code[self.pc + op_idx],
             2 => {
                 let idx = (self.code[self.pc + op_idx] + self.relative_base) as usize;
                 self.ensure_memory(idx);
                 self.code[idx]
-            },
+            }
             _ => panic!("Unknown operand mode: {}", mode),
         }
     }
@@ -172,4 +184,3 @@ impl Cpu {
         }
     }
 }
-
