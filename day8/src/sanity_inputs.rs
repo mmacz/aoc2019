@@ -7,4 +7,3 @@ pub fn sanity1() -> String {
 pub fn sanity2() -> String {
     "0222112222120000".to_string()
 }
-
