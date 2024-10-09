@@ -1,4 +1,4 @@
-![Build status](https://github.com/mmacz/aoc2019/actions/workflows/rust.yml/badge.svg)
+![Build status](https://github.com/mmacz/aoc2019/actions/workflows/aoc2019.yml/badge.svg)
 
 # Advent of Code 2019
 
