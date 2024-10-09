@@ -24,7 +24,6 @@ impl Cpu {
         self.input.push_back(input);
     }
 
-
     pub fn run_for_output(&mut self) -> i64 {
         loop {
             match self.step() {
