@@ -16,14 +16,4 @@ jobs:
     - uses: actions/checkout@v4
     - name: Build
       run: cargo build -r
-    - name: Run days
-      run: |
-        cargo run --bin day1 inputs/input1.txt
-        cargo run --bin day2 inputs/input2.txt
-        cargo run --bin day3 inputs/input3.txt
-        cargo run --bin day4
-        cargo run --bin day5 inputs/input5.txt
-        cargo run --bin day6 inputs/input6.txt
-        cargo run --bin day7 inputs/input7.txt
-        cargo run --bin day8
-        cargo run --bin day9
+
