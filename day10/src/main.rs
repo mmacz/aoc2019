@@ -1,7 +1,7 @@
 use std::collections::HashSet;
-use std::cmp::Ordering;
 
-pub mod sanity_inputs;
+mod sanity_inputs;
+mod input;
 
 fn asteroid_positions(input: &str) -> Vec<(i32, i32)> {
     input
@@ -55,8 +55,10 @@ fn solution1(input: &str) -> ((i32, i32), usize) {
 }
 
 fn main() {
-    println!("{:?}", solution1(sanity_inputs::INPUT1).0);
-    //assert_eq!(8, solution1(sanity_inputs::INPUT1).1);
-    //assert_eq!(33, solution1(sanity_inputs::INPUT2).1);
-    //assert_eq!(210, solution1(sanity_inputs::INPUT3).1);
+    assert_eq!(8, solution1(sanity_inputs::INPUT1).1);
+    assert_eq!(33, solution1(sanity_inputs::INPUT2).1);
+    assert_eq!(210, solution1(sanity_inputs::INPUT3).1);
+
+    let answer1 = solution1(input::INPUT);
+    println!("Answer 1. Best place: {:?}, visible asteroids: {}", answer1.0, answer1.1);
 }
