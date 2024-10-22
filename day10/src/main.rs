@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashSet, BTreeMap};
 use std::f64::consts::PI;
 
 mod sanity_inputs;
@@ -8,13 +8,11 @@ fn asteroid_positions(input: &str) -> Vec<(i32, i32)> {
     input
         .lines()
         .enumerate()
-        // iterating over lines hence going down the map
         .flat_map(|(y, line)| {
             line.chars()
                 .enumerate()
-                // iterate over characters in lines hence going right to the map
-                // move takes ownership
-                .filter_map(move |(x, char)| match char {
+                .filter_map(move |(x, char)| 
+                    match char {
                     '#' => Some((x as i32, y as i32)),
                     _ => None,
                 })
@@ -61,8 +59,12 @@ fn solution1(input: &str) -> ((i32, i32), usize) {
 fn get_angle(pt1: (i32, i32), pt2: (i32, i32)) -> f64 {
     let (dx, dy): (i32, i32) = vec_diff(pt1, pt2);
     let mut angle =  (dy as f64).atan2(dx as f64) + PI / 2.0;
+    let _2pi = PI * 2.0;
     if angle < 0.0 {
-        angle += PI * 2.0;
+        angle += _2pi;
+    }
+    else if angle > _2pi {
+        angle -= _2pi;
     }
     angle
 }
@@ -74,12 +76,55 @@ fn get_distance(pt1: (i32, i32), pt2: (i32, i32)) -> f64 {
 
 fn solution2(input: &str, best_place: (i32, i32)) -> (i32, i32) {
     let asteroids = asteroid_positions(input);
-    (0,0)
+    let mut by_angle: BTreeMap<i64, Vec<(f64, (i32, i32))>> = BTreeMap::new();
+
+    for &a in asteroids.iter() {
+        if a == best_place {
+            continue
+        }
+
+        let angle: i64 = (get_angle(best_place, a) * 100_000.0) as i64;
+        let dist: f64 = get_distance(best_place, a);
+        by_angle
+            .entry(angle)
+            .or_insert(Vec::new())
+            .push((dist, a));
+    }
+    
+    for (_, a) in by_angle.iter_mut() {
+        a.sort_by(|(dist1, _), (dist2, _)| dist1.partial_cmp(dist2).unwrap());
+    }
+
+    //for entry in by_angle.iter() {
+    //    println!("{}, {:?}", entry.0, entry.1)
+    //}
+    let mut destroy_count = 0;
+    let mut last_destroyed = (0, 0);
+
+    while destroy_count < 200 {
+        for (angle, ast) in by_angle.iter_mut() {
+            if !ast.is_empty() {
+                destroy_count += 1;
+                last_destroyed = ast.remove(0).1;
+                if last_destroyed == (8,2) {
+                    println!("Destroyed 8,2 at angle: {}, step: {}", angle, destroy_count)
+                }
+                if destroy_count == 200 {
+                    return last_destroyed;
+                }
+            }
+        }
+    }
+
+    last_destroyed
+
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    
+    #[test]
     fn test_diff_vector() {
         assert_eq!(vec_diff((8, 3), (10, 5)), (2, 2));
     }
