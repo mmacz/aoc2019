@@ -60,7 +60,11 @@ fn solution1(input: &str) -> ((i32, i32), usize) {
 
 fn get_angle(pt1: (i32, i32), pt2: (i32, i32)) -> f64 {
     let (dx, dy): (i32, i32) = vec_diff(pt1, pt2);
-    -(dy as f64).atan2(dx as f64)
+    let mut angle =  (dy as f64).atan2(dx as f64) + PI / 2.0;
+    if angle < 0.0 {
+        angle += PI * 2.0;
+    }
+    angle
 }
 
 fn get_distance(pt1: (i32, i32), pt2: (i32, i32)) -> f64 {
@@ -71,6 +75,38 @@ fn get_distance(pt1: (i32, i32), pt2: (i32, i32)) -> f64 {
 fn solution2(input: &str, best_place: (i32, i32)) -> (i32, i32) {
     let asteroids = asteroid_positions(input);
     (0,0)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    fn test_diff_vector() {
+        assert_eq!(vec_diff((8, 3), (10, 5)), (2, 2));
+    }
+
+    #[test]
+    fn test_get_angle_above() {
+        let angle = get_angle((8, 3), (8, 1));
+        assert!((angle - 0.).abs() < std::f64::EPSILON, "Expected: 0 vs Actual: {}", angle);
+    }
+
+    #[test]
+    fn test_get_angle_right() {
+        let angle = get_angle((8, 3), (10, 3));
+        assert!((angle - std::f64::consts::FRAC_PI_2).abs() < std::f64::EPSILON, "Expected: ~pi/2 vs Actual: {}", angle);
+    }
+
+    #[test]
+    fn test_get_angle_down() {
+        let angle = get_angle((8, 3), (8, 5));
+        assert!((angle - std::f64::consts::PI).abs() < std::f64::EPSILON, "Expected: ~pi vs Actual: {}", angle);
+    }
+
+    #[test]
+    fn test_get_angle_left() {
+        let angle = get_angle((8, 3), (6, 3));
+        assert!((angle - 3.0 * std::f64::consts::FRAC_PI_2).abs() < std::f64::EPSILON, "Expected: 3pi/2 vs Actual: {}", angle);
+    }
 }
 
 
