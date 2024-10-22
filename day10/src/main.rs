@@ -107,16 +107,30 @@ mod tests {
         let angle = get_angle((8, 3), (6, 3));
         assert!((angle - 3.0 * std::f64::consts::FRAC_PI_2).abs() < std::f64::EPSILON, "Expected: 3pi/2 vs Actual: {}", angle);
     }
+
+    #[test]
+    fn test_solution1_sanity_input1() {
+        assert_eq!(8, solution1(sanity_inputs::INPUT1).1);
+    }
+
+    #[test]
+    fn test_solution1_sanity_input2() {
+        assert_eq!(33, solution1(sanity_inputs::INPUT2).1);
+    }
+
+    #[test]
+    fn test_solution1_sanity_input3() {
+        assert_eq!(210, solution1(sanity_inputs::INPUT3).1);
+    }
+
+    #[test]
+    fn test_solution2_sanity_input3() {
+        assert_eq!((8, 2), solution2(sanity_inputs::INPUT3, (11, 13)));
+    }
 }
 
 
 fn main() {
-    assert_eq!(8, solution1(sanity_inputs::INPUT1).1);
-    assert_eq!(33, solution1(sanity_inputs::INPUT2).1);
-    assert_eq!(210, solution1(sanity_inputs::INPUT3).1);
-    let sanity_part_b = solution2(sanity_inputs::INPUT3, (11, 13));
-    assert_eq!(802, sanity_part_b.0 * 100 + sanity_part_b.1);
-
     let answer1 = solution1(input::INPUT);
     println!("Answer 1. Best place: {:?}, visible asteroids: {}", answer1.0, answer1.1);
     let answer2 = solution2(input::INPUT, answer1.0);
