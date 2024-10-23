@@ -59,12 +59,12 @@ fn solution1(input: &str) -> ((i32, i32), usize) {
 fn get_angle(pt1: (i32, i32), pt2: (i32, i32)) -> f64 {
     let (dx, dy): (i32, i32) = vec_diff(pt1, pt2);
     let mut angle =  (dy as f64).atan2(dx as f64) + PI / 2.0;
-    let _2pi = PI * 2.0;
+    angle *= 180.0 / PI;
     if angle < 0.0 {
-        angle += _2pi;
+        angle += 360.0;
     }
-    else if angle > _2pi {
-        angle -= _2pi;
+    else if angle > 360.0 {
+        angle -= 360.0;
     }
     angle
 }
@@ -138,19 +138,19 @@ mod tests {
     #[test]
     fn test_get_angle_right() {
         let angle = get_angle((8, 3), (10, 3));
-        assert!((angle - std::f64::consts::FRAC_PI_2).abs() < std::f64::EPSILON, "Expected: ~pi/2 vs Actual: {}", angle);
+        assert!((angle - 90.0).abs() < std::f64::EPSILON, "Expected: 90 vs Actual: {}", angle);
     }
 
     #[test]
     fn test_get_angle_down() {
         let angle = get_angle((8, 3), (8, 5));
-        assert!((angle - std::f64::consts::PI).abs() < std::f64::EPSILON, "Expected: ~pi vs Actual: {}", angle);
+        assert!((angle - 180.0).abs() < std::f64::EPSILON, "Expected: 180 vs Actual: {}", angle);
     }
 
     #[test]
     fn test_get_angle_left() {
         let angle = get_angle((8, 3), (6, 3));
-        assert!((angle - 3.0 * std::f64::consts::FRAC_PI_2).abs() < std::f64::EPSILON, "Expected: 3pi/2 vs Actual: {}", angle);
+        assert!((angle - 270.0).abs() < std::f64::EPSILON, "Expected: 270 vs Actual: {}", angle);
     }
 
     #[test]
