@@ -9,7 +9,7 @@ pub enum CpuStatus {
 
 #[derive(Clone)]
 pub struct Cpu {
-    code: Vec<i64>,
+    pub code: Vec<i64>,
     pc: usize,
     input: VecDeque<i64>,
     relative_base: i64,

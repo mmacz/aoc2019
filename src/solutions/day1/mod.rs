@@ -30,7 +30,7 @@ impl Solver for Problem {
 
 #[cfg(test)]
 mod tests {
-    use super::{fuel_counter, total_fuel};
+    use crate::solutions::day1::*;
 
     #[test]
     fn test_fuel_counter() {
