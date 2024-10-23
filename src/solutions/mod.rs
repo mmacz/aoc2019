@@ -4,6 +4,7 @@ mod day2;
 mod day3;
 mod day4;
 mod day5;
+mod day6;
 
 pub fn run_solutions() {
     day1::Problem {}.solve(1);
@@ -11,5 +12,6 @@ pub fn run_solutions() {
     day3::Problem {}.solve(3);
     day4::Problem {}.solve(4);
     day5::Problem {}.solve(5);
+    day6::Problem {}.solve(6);
 }
 

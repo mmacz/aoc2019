@@ -1,13 +1,12 @@
 use std::collections::HashMap;
-use std::env;
-use std::fs;
-use std::string::String;
+use crate::solver::Solver;
+mod input;
 
 fn count(map: &HashMap<&str, &str>, item: &str) -> usize {
     map.get(item).map(|item| count(map, item) + 1).unwrap_or(0)
 }
 
-fn get_orbit_map(content: &String) -> HashMap<&str, &str> {
+fn get_orbit_map(content: &str) -> HashMap<&str, &str> {
     let map: HashMap<&str, &str> = content
         .lines()
         .map(|line| line.split(")").collect::<Vec<&str>>())
@@ -18,12 +17,12 @@ fn get_orbit_map(content: &String) -> HashMap<&str, &str> {
     map
 }
 
-fn orbit_count_checksum(content: &String) -> usize {
+fn orbit_count_checksum(content: &str) -> usize {
     let map: HashMap<&str, &str> = get_orbit_map(content);
     map.keys().map(|planet| count(&map, planet)).sum::<usize>()
 }
 
-fn distance(content: &String, from: &str, to: &str) -> usize {
+fn distance(content: &str, from: &str, to: &str) -> usize {
     let map: HashMap<&str, &str> = get_orbit_map(content);
     let mut route = vec![from];
     while let Some(item) = map.get(route.last().unwrap()) {
@@ -42,12 +41,19 @@ fn distance(content: &String, from: &str, to: &str) -> usize {
     0
 }
 
-fn main() {
-    let args: Vec<String> = env::args().collect();
-    if args.len() != 2 {
-        panic!("File with input is not provided");
+pub struct Problem;
+
+impl Solver for Problem {
+    type Ans1 = usize;
+    type Ans2 = usize;
+
+    fn solution1(&self) -> usize {
+        orbit_count_checksum(input::INPUT)
     }
-    let file: String = fs::read_to_string(&args[1]).unwrap();
-    println!("Answer 1: {}", orbit_count_checksum(&file));
-    println!("Answet 2: {}", distance(&file, "YOU", "SAN"));
+
+    fn solution2(&self) -> usize {
+        distance(input::INPUT, "YOU", "SAN")
+    }
 }
+
+
