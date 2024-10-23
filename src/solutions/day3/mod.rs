@@ -1,32 +1,31 @@
 use std::collections::HashMap;
-use std::env;
-use std::fs::File;
-use std::io::{self, BufRead};
-use std::path::Path;
 use std::str::FromStr;
 
+mod input;
+use crate::solver::Solver;
+
 struct Coords {
-    dir: i32,
-    steps: i32,
+    dir: i64,
+    steps: i64,
     is_vert: bool,
 }
 
 struct Line {
-    coord: i32,
-    tuple: (i32, i32),
+    coord: i64,
+    tuple: (i64, i64)
 }
 
 #[derive(Clone)]
 struct Point {
-    x: i32,
-    y: i32,
+    x: i64,
+    y: i64
 }
 
 impl Coords {
     pub fn new(entry: &str) -> Self {
         let d: char = entry.chars().nth(0).unwrap();
-        let direction: i32 = if d == 'R' || d == 'U' { 1 } else { -1 };
-        let steps: i32 = i32::from_str(&entry[1..]).unwrap();
+        let direction: i64 = if d == 'R' || d == 'U' { 1 } else { -1 };
+        let steps: i64 = i64::from_str(&entry[1..]).unwrap();
         let is_vert: bool = d == 'U' || d == 'D';
         Coords {
             dir: direction,
@@ -37,11 +36,11 @@ impl Coords {
 }
 
 impl Line {
-    pub fn new(coord: i32, tuple: (i32, i32)) -> Self {
-        let mut t1: i32 = tuple.0;
-        let mut t2: i32 = tuple.1;
+    pub fn new(coord: i64, tuple: (i64, i64)) -> Self {
+        let mut t1: i64 = tuple.0;
+        let mut t2: i64 = tuple.1;
         if t1 > t2 {
-            let tmp: i32 = t1;
+            let tmp: i64 = t1;
             t1 = t2;
             t2 = tmp;
         }
@@ -53,27 +52,25 @@ impl Line {
 }
 
 impl Point {
-    pub fn new(x: i32, y: i32) -> Self {
+    pub fn new(x: i64, y: i64) -> Self {
         Point { x: x, y: y }
     }
 }
 
-pub fn read_lines<P>(filename: P) -> io::Result<io::Lines<io::BufReader<File>>>
-where
-    P: AsRef<Path>,
-{
-    let file = File::open(filename)?;
-    Ok(io::BufReader::new(file).lines())
+fn get_wire_lines(wire: &str) -> Vec<Coords> {
+    wire.split(",").map(|s: &str| Coords::new(s)).collect()
 }
 
-fn collect_lines(wire: &Vec<Coords>) -> (Vec<Line>, Vec<Line>) {
+fn collect_lines(wire: &str) -> (Vec<Line>, Vec<Line>) {
     let mut horizontal_lines: Vec<Line> = Vec::new();
     let mut vertical_lines: Vec<Line> = Vec::new();
-    let mut x: i32 = 0;
-    let mut y: i32 = 0;
+    let mut x: i64 = 0;
+    let mut y: i64 = 0;
 
-    for w in wire {
-        let shift = w.steps * w.dir as i32;
+    let wires = get_wire_lines(wire);
+
+    for w in wires {
+        let shift = w.steps * w.dir;
         if w.is_vert {
             vertical_lines.push(Line::new(x, (y, y + shift)));
             y += shift;
@@ -86,7 +83,7 @@ fn collect_lines(wire: &Vec<Coords>) -> (Vec<Line>, Vec<Line>) {
     (horizontal_lines, vertical_lines)
 }
 
-fn is_in_range(lower: i32, upper: i32, value: i32) -> bool {
+fn is_in_range(lower: i64, upper: i64, value: i64) -> bool {
     return value > lower && value < upper;
 }
 
@@ -104,14 +101,14 @@ fn get_intersections(horizontal: &Vec<Line>, vertical: &Vec<Line>) -> Vec<Point>
     intersections
 }
 
-fn manhattan_distance(pt: &Point) -> i32 {
+fn manhattan_distance(pt: &Point) -> i64 {
     pt.x.abs() + pt.y.abs()
 }
 
-fn get_min_distance(intersections: &Vec<Point>) -> i32 {
-    let mut min_distance = i32::MAX;
+fn get_min_distance(intersections: &Vec<Point>) -> i64 {
+    let mut min_distance = i64::MAX;
     for ip in intersections.into_iter() {
-        let distance: i32 = manhattan_distance(&ip);
+        let distance: i64 = manhattan_distance(&ip);
         if min_distance > distance {
             min_distance = distance;
         }
@@ -119,7 +116,7 @@ fn get_min_distance(intersections: &Vec<Point>) -> i32 {
     min_distance
 }
 
-fn is_intersection(x: i32, y: i32, intersections: &Vec<Point>) -> bool {
+fn is_intersection(x: i64, y: i64, intersections: &Vec<Point>) -> bool {
     for ip in intersections {
         /* Inverted entries in wrapper */
         if y == ip.x && x == ip.y {
@@ -129,23 +126,23 @@ fn is_intersection(x: i32, y: i32, intersections: &Vec<Point>) -> bool {
     false
 }
 
-fn build_key(x: i32, y: i32) -> u64 {
+fn build_key(x: i64, y: i64) -> u64 {
     (x as u64) << 32 | y as u64
 }
 
-fn get_min_steps(wires: &Vec<Vec<Coords>>, intersections: &Vec<Point>) -> u64 {
+fn get_min_steps(wires: &Vec<Vec<Coords>>, intersections: &Vec<Point>) -> i64 {
     let mut steps: HashMap<u64, u32> = HashMap::new();
     let mut key;
     for wire in wires {
-        let mut x: i32 = 0;
-        let mut y: i32 = 0;
+        let mut x: i64 = 0;
+        let mut y: i64 = 0;
         let mut step: u32 = 0;
         for c in wire {
             for _s in 0..c.steps {
                 if c.is_vert {
-                    y += c.dir;
+                    y += c.dir as i64;
                 } else {
-                    x += c.dir;
+                    x += c.dir as i64;
                 }
                 step += 1;
                 if is_intersection(x, y, &intersections) {
@@ -167,32 +164,34 @@ fn get_min_steps(wires: &Vec<Vec<Coords>>, intersections: &Vec<Point>) -> u64 {
             min_steps = s.1 as u64;
         }
     }
-    min_steps
+    min_steps as i64
 }
 
-fn solution(input: io::Lines<io::BufReader<File>>) -> () {
-    let mut wires: Vec<Vec<Coords>> = Vec::new();
-    for line in input.flatten() {
-        let coords: Vec<Coords> = line.split(",").map(|s: &str| Coords::new(s)).collect();
-        wires.push(coords);
+pub struct Problem;
+impl Solver for Problem {
+    type Ans1 = i64;
+    type Ans2 = i64;
+
+    fn solution1(&self) -> i64 {
+        let lines1 = collect_lines(input::WIRE1);
+        let lines2 = collect_lines(input::WIRE2);
+
+        let mut intersections = get_intersections(&lines1.0, &lines2.1);
+        intersections.extend(get_intersections(&lines2.0, &lines1.1));
+        get_min_distance(&intersections)
     }
 
-    let lines1 = collect_lines(&wires[0]);
-    let lines2 = collect_lines(&wires[1]);
+    fn solution2(&self) -> i64 {
+        let lines1 = collect_lines(input::WIRE1);
+        let lines2 = collect_lines(input::WIRE2);
 
-    let mut intersections = get_intersections(&lines1.0, &lines2.1);
-    intersections.extend(get_intersections(&lines2.0, &lines1.1));
+        let mut intersections = get_intersections(&lines1.0, &lines2.1);
+        intersections.extend(get_intersections(&lines2.0, &lines1.1));
 
-    println!("Answer 1: {}", get_min_distance(&intersections));
-    println!("Answer 2: {}", get_min_steps(&wires, &intersections));
+        let wires: Vec<Vec<Coords>> = vec![
+            get_wire_lines(input::WIRE1), get_wire_lines(input::WIRE2)
+        ];
+        get_min_steps(&wires, &intersections)
+    }
 }
 
-fn main() {
-    let args: Vec<String> = env::args().collect();
-    if args.len() != 2 {
-        panic!("File with input is not provided");
-    }
-    if let Ok(lines) = read_lines(&args[1]) {
-        solution(lines);
-    }
-}
