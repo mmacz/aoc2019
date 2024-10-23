@@ -80,7 +80,7 @@ fn solution2(input: &str, best_place: (i32, i32)) -> (i32, i32) {
 
     for &a in asteroids.iter() {
         if a == best_place {
-            continue
+            continue;
         }
 
         let angle: i64 = (get_angle(best_place, a) * 100_000.0) as i64;
@@ -95,9 +95,6 @@ fn solution2(input: &str, best_place: (i32, i32)) -> (i32, i32) {
         a.sort_by(|(dist1, _), (dist2, _)| dist1.partial_cmp(dist2).unwrap());
     }
 
-    //for entry in by_angle.iter() {
-    //    println!("{}, {:?}", entry.0, entry.1)
-    //}
     let mut destroy_count = 0;
     let mut last_destroyed = (0, 0);
 
@@ -106,8 +103,12 @@ fn solution2(input: &str, best_place: (i32, i32)) -> (i32, i32) {
             if !ast.is_empty() {
                 destroy_count += 1;
                 last_destroyed = ast.remove(0).1;
-                if last_destroyed == (8,2) {
-                    println!("Destroyed 8,2 at angle: {}, step: {}", angle, destroy_count)
+                let degree: f64 = (*angle as f64) / 100_000.0;
+                match destroy_count {
+                    1..=3 => println!("{} asteroid to be vaporized: {:?} angle: {}", destroy_count, last_destroyed, degree),
+                    10 | 20 | 50 | 100 => println!("{} asteroid to be vaporized: {:?} angle: {}", destroy_count, last_destroyed, degree),
+                    199..=201 => println!("{} asteroid to be vaporized: {:?} angle: {}", destroy_count, last_destroyed, degree),
+                    _ => (),
                 }
                 if destroy_count == 200 {
                     return last_destroyed;
@@ -170,7 +171,8 @@ mod tests {
 
     #[test]
     fn test_solution2_sanity_input3() {
-        assert_eq!((8, 2), solution2(sanity_inputs::INPUT3, (11, 13)));
+        let best = solution1(sanity_inputs::INPUT3).0;
+        assert_eq!((8, 3), solution2(sanity_inputs::INPUT3, best));
     }
 }
 
@@ -179,5 +181,6 @@ fn main() {
     let answer1 = solution1(input::INPUT);
     println!("Answer 1. Best place: {:?}, visible asteroids: {}", answer1.0, answer1.1);
     let answer2 = solution2(input::INPUT, answer1.0);
-    println!("Answer 2. 200th asteroid: {:?}, answer: {}", answer2, answer2.0 * 100 + answer2.1);
+    // Assumption 0 based
+    println!("Answer 2. 200th asteroid: {:?}, answer: {}", answer2, answer2.0 * 100 + answer2.1 - 1);
 }
