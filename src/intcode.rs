@@ -10,6 +10,7 @@ pub enum CpuStatus {
 #[derive(Clone)]
 pub struct Cpu {
     pub code: Vec<i64>,
+    pub last_out: Option<i64>,
     pc: usize,
     input: VecDeque<i64>,
     relative_base: i64,
@@ -19,6 +20,7 @@ impl Cpu {
     pub fn new(code: &Vec<i64>) -> Cpu {
         return Cpu {
             code: code.to_vec(),
+            last_out: None,
             pc: 0,
             input: VecDeque::new(),
             relative_base: 0,
@@ -42,7 +44,7 @@ impl Cpu {
     pub fn run(&mut self) -> () {
         loop {
             match self.step() {
-                CpuStatus::Output(x) => println!("{}", x),
+                CpuStatus::Output(x) => self.last_out = Some(x),
                 CpuStatus::Finished => break,
                 _ => continue,
             }

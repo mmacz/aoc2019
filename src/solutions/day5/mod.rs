@@ -1,0 +1,35 @@
+mod input;
+use crate::intcode::*;
+use crate::solver::Solver;
+use std::str::FromStr;
+
+fn get_program(program: &str) -> Vec<i64> {
+    program
+        .split(",")
+        .filter_map(|c| i64::from_str(c).ok())
+        .collect()
+}
+
+pub struct Problem;
+
+impl Solver for Problem {
+    type Ans1 = i64;
+    type Ans2 = i64;
+
+    fn solution1(&self) -> i64 {
+        let code = get_program(input::INPUT);
+        let mut cpu = Cpu::new(&code);
+        cpu.push_input(1);
+        cpu.run();
+        cpu.last_out.unwrap_or(-1)
+    }
+
+    fn solution2(&self) -> i64 {
+        let code = get_program(input::INPUT);
+        let mut cpu = Cpu::new(&code);
+        cpu.push_input(5);
+        cpu.run();
+        cpu.last_out.unwrap_or(-1)
+    }
+}
+
