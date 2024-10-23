@@ -13,7 +13,7 @@ fn asteroid_positions(input: &str) -> Vec<(i32, i32)> {
                 .enumerate()
                 .filter_map(move |(x, char)| 
                     match char {
-                    '#' => Some((x as i32, y as i32)),
+                    '#' => Some((x as i32, (y - 1) as i32)), // y - 1 beacause of input formatting
                     _ => None,
                 })
         })
@@ -172,7 +172,7 @@ mod tests {
     #[test]
     fn test_solution2_sanity_input3() {
         let best = solution1(sanity_inputs::INPUT3).0;
-        assert_eq!((8, 3), solution2(sanity_inputs::INPUT3, best));
+        assert_eq!((8, 2), solution2(sanity_inputs::INPUT3, best));
     }
 }
 
@@ -182,5 +182,5 @@ fn main() {
     println!("Answer 1. Best place: {:?}, visible asteroids: {}", answer1.0, answer1.1);
     let answer2 = solution2(input::INPUT, answer1.0);
     // Assumption 0 based
-    println!("Answer 2. 200th asteroid: {:?}, answer: {}", answer2, answer2.0 * 100 + answer2.1 - 1);
+    println!("Answer 2. 200th asteroid: {:?}, answer: {}", answer2, answer2.0 * 100 + answer2.1);
 }
