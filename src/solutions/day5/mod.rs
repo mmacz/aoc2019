@@ -20,12 +20,7 @@ impl Solver for Problem {
         let code = get_program(input::INPUT);
         let mut cpu = Cpu::new(&code);
         cpu.push_input(1);
-        loop {
-            match cpu.step() {
-                CpuStatus::Output(x) => return x,
-                _ => continue,
-            }
-        }
+        cpu.run()
     }
 
     fn solution2(&self) -> i64 {
