@@ -39,21 +39,34 @@ fn feedback_loop_thrusters(program: &str) -> i64 {
                 amps[i].push_input(phases[i]);
             }
             let mut input = 0;
-            for i in (0..5).cycle() {
-                amps[i].push_input(input);
-                loop {
-                    match amps[i].step() {
-                        CpuStatus::Output(out) => input = out,
-                        CpuStatus::Finished => return input,
-                        CpuStatus::WaitForInput => break,
-                        CpuStatus::Running => continue,
+            let mut last_output = 0;
+            let mut running = true;
+            while running {
+                running = false;
+                for i in 0..5 {
+                    amps[i].push_input(input);
+                    loop {
+                        match amps[i].step() {
+                            CpuStatus::Output(out) => {
+                                input = out;
+                                last_output = out;
+                                running = true;
+                                break;
+                            },
+                            CpuStatus::Finished => break,
+                            CpuStatus::WaitForInput => {
+                                running = true;
+                                break;
+                            },
+                            CpuStatus::Running => continue,
+                        }
                     }
                 }
             }
-            unreachable!()
+            last_output
         })
         .max()
-        .unwrap_or(-1)
+        .unwrap()
 }
 
 pub struct Problem;

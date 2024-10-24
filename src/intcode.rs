@@ -84,6 +84,7 @@ impl Cpu {
         loop {
             match self.step() {
                 CpuStatus::Output(x) => last_out = Some(x).unwrap(),
+                CpuStatus::WaitForInput => return last_out,
                 CpuStatus::Finished => return last_out,
                 _ => continue,
             }
@@ -91,6 +92,10 @@ impl Cpu {
     }
 
     pub fn step(&mut self) -> CpuStatus {
+        if self.pc >= self.code.len() {
+            return CpuStatus::Finished;
+        }
+
         let (opcode, param_modes) = self.decode(self.code[self.pc]);
 
         match opcode {
@@ -123,9 +128,9 @@ impl Cpu {
     fn get_param(&self, idx: usize, param_modes: &Vec<ParamMode>) -> i64 {
         let param = self.code[self.pc + idx + 1];
         match param_modes[idx] {
-            ParamMode::Position => self.code[param as usize],
+            ParamMode::Position => self.read_mem(param as usize),
             ParamMode::Immediate => param,
-            ParamMode::Relative => self.code[(param + self.relative_base) as usize],
+            ParamMode::Relative => self.read_mem((param + self.relative_base) as usize),
         }
     }
 
@@ -180,10 +185,13 @@ impl Cpu {
     fn input(&mut self, param_modes: &Vec<ParamMode>) -> CpuStatus {
         let dst = self.dst(0, param_modes);
         match self.inputs.pop_front() {
-            Some(val) => { self.write_mem(dst, val); self.pc += 2},
-            None => return CpuStatus::WaitForInput,
+            Some(val) => {
+                self.write_mem(dst, val);
+                self.pc += 2;
+                CpuStatus::Running
+            }
+            None => CpuStatus::WaitForInput,
         }
-        CpuStatus::Running
     }
 
     fn output(&mut self, param_modes: &Vec<ParamMode>) -> CpuStatus {
