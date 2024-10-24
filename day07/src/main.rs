@@ -48,8 +48,8 @@ fn solution2(str_code: &String) -> i32 {
                 match amps[i].process() {
                     CpuStatus::Output(o) => input = o,
                     CpuStatus::Finished => return input,
-                    CpuStatus::WaitForInput => unreachable!(),
-                    CpuStatus::Running => unreachable!(),
+                    CpuStatus::WaitForInput => break,
+                    CpuStatus::Running => continue,
                 }
             }
             unreachable!()

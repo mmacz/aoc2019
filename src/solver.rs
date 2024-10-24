@@ -10,9 +10,9 @@ pub trait Solver {
     fn solve(&self, day: u32) {
         let a1 = self.solution1();
         let a2 = self.solution2();
-        println!(">>>>>> ==================== <<<<<<");
-        println!("Day {} answer 1: {}", day, a1);
-        println!("Day {} answer 2: {}", day, a2);
+        println!(">>>>>> ======= Day {:2} ======= <<<<<<", day);
+        println!("Answer 1: {}", a1);
+        println!("Answer 2: {}", a2);
     }
 }
 

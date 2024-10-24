@@ -7,12 +7,61 @@ pub enum CpuStatus {
     Running,
 }
 
+#[derive(Debug, Eq, PartialEq, Clone)]
+enum Opcode {
+    ADD,
+    MUL,
+    IN,
+    OUT,
+    JIT,
+    JIF,
+    LT,
+    EQ,
+    ARB,
+    BRK
+}
+
+#[derive(Debug, Eq, PartialEq)]
+enum ParamMode {
+    Position,
+    Immediate,
+    Relative,
+}
+
+impl From<i64> for Opcode {
+    fn from(val: i64) -> Self {
+        match val {
+            1 => Opcode::ADD,
+            2 => Opcode::MUL,
+            3 => Opcode::IN,
+            4 => Opcode::OUT,
+            5 => Opcode::JIT,
+            6 => Opcode::JIF,
+            7 => Opcode::LT,
+            8 => Opcode::EQ,
+            9 => Opcode::ARB,
+            99 => Opcode::BRK,
+            _ => panic!("Invalid opcode: {}!", val)
+        }
+    }
+}
+
+impl From<i64> for ParamMode {
+    fn from(val: i64) -> Self {
+        match val {
+            0 => ParamMode::Position,
+            1 => ParamMode::Immediate,
+            2 => ParamMode::Relative,
+            _ => panic!("Invalid parameter mode: {}!", val)
+        }
+    }
+}
+
 #[derive(Clone)]
 pub struct Cpu {
     pub code: Vec<i64>,
-    pub last_out: Option<i64>,
     pc: usize,
-    input: VecDeque<i64>,
+    inputs: VecDeque<i64>,
     relative_base: i64,
 }
 
@@ -20,169 +69,154 @@ impl Cpu {
     pub fn new(code: &Vec<i64>) -> Cpu {
         return Cpu {
             code: code.to_vec(),
-            last_out: None,
             pc: 0,
-            input: VecDeque::new(),
+            inputs: VecDeque::new(),
             relative_base: 0,
         };
     }
 
     pub fn push_input(&mut self, input: i64) {
-        self.input.push_back(input);
+        self.inputs.push_back(input);
     }
 
-    pub fn run_for_output(&mut self) -> i64 {
+    pub fn run(&mut self) -> i64 {
+        let mut last_out: i64 = 0;
         loop {
             match self.step() {
-                CpuStatus::Output(x) => return x,
-                CpuStatus::Finished => panic!("Process should have an output"),
-                _ => continue,
-            }
-        }
-    }
-
-    pub fn run(&mut self) -> () {
-        loop {
-            match self.step() {
-                CpuStatus::Output(x) => self.last_out = Some(x),
-                CpuStatus::Finished => break,
+                CpuStatus::Output(x) => last_out = Some(x).unwrap(),
+                CpuStatus::Finished => return last_out,
                 _ => continue,
             }
         }
     }
 
     pub fn step(&mut self) -> CpuStatus {
-        let mut code: i64 = self.code[self.pc];
-        let opcode = self.parse_code(&mut code, 100);
-        let op1_mode = self.parse_code(&mut code, 10);
-        let op2_mode = self.parse_code(&mut code, 10);
-        let op3_mode = self.parse_code(&mut code, 10);
+        let (opcode, param_modes) = self.decode(self.code[self.pc]);
 
         match opcode {
-            1 => {
-                // add
-                let op1 = self.get_operand_by_mode(op1_mode, 1);
-                let op2 = self.get_operand_by_mode(op2_mode, 2);
-                let op3: usize = self.get_address_by_mode(op3_mode, 3);
-                self.ensure_memory(op3);
-                self.code[op3] = op1 + op2;
-                self.pc += 4;
-            }
-            2 => {
-                // mul
-                let op1 = self.get_operand_by_mode(op1_mode, 1);
-                let op2 = self.get_operand_by_mode(op2_mode, 2);
-                let op3: usize = self.get_address_by_mode(op3_mode, 3);
-                self.ensure_memory(op3);
-                self.code[op3] = op1 * op2;
-                self.pc += 4;
-            }
-            3 => {
-                // ld
-                let param;
-                match self.input.pop_front() {
-                    Some(x) => param = x,
-                    None => return CpuStatus::WaitForInput,
-                }
-                let op1: usize = self.get_address_by_mode(op1_mode, 1) as usize;
-                self.ensure_memory(op1);
-                self.code[op1] = param;
-                self.pc += 2;
-            }
-            4 => {
-                // rd
-                let op1 = self.get_operand_by_mode(op1_mode, 1);
-                self.pc += 2;
-                return CpuStatus::Output(op1 as i64);
-            }
-            5 => {
-                //jt
-                let op1 = self.get_operand_by_mode(op1_mode, 1);
-                let op2 = self.get_operand_by_mode(op2_mode, 2);
-                match op1 {
-                    0 => self.pc += 3,
-                    _ => self.pc = op2 as usize,
-                }
-            }
-            6 => {
-                // jf
-                let op1 = self.get_operand_by_mode(op1_mode, 1);
-                let op2 = self.get_operand_by_mode(op2_mode, 2);
-                match op1 {
-                    0 => self.pc = op2 as usize,
-                    _ => self.pc += 3,
-                }
-            }
-            7 => {
-                // lt
-                let op1 = self.get_operand_by_mode(op1_mode, 1);
-                let op2 = self.get_operand_by_mode(op2_mode, 2);
-                let op3: usize = self.get_address_by_mode(op3_mode, 3);
-                self.ensure_memory(op3);
-                self.code[op3] = if op1 < op2 { 1 } else { 0 };
-                self.pc += 4;
-            }
-            8 => {
-                // eq
-                let op1 = self.get_operand_by_mode(op1_mode, 1);
-                let op2 = self.get_operand_by_mode(op2_mode, 2);
-                let op3: usize = self.get_address_by_mode(op3_mode, 3);
-                self.ensure_memory(op3);
-                self.code[op3] = if op1 == op2 { 1 } else { 0 };
-                self.pc += 4;
-            }
-            9 => {
-                let op1 = self.get_operand_by_mode(op1_mode, 1);
-                self.relative_base += op1;
-                self.pc += 2;
-            }
-            99 => {
-                // stop
-                return CpuStatus::Finished;
-            }
-            _ => panic!("Unknown opcode: {}", opcode),
+            Opcode::ADD => self.add(&param_modes),
+            Opcode::MUL => self.mul(&param_modes),
+            Opcode::IN => return self.input(&param_modes),
+            Opcode::OUT => return self.output(&param_modes),
+            Opcode::JIT => self.jit(&param_modes),
+            Opcode::JIF => self.jif(&param_modes),
+            Opcode::LT => self.lt(&param_modes),
+            Opcode::EQ => self.eq(&param_modes),
+            Opcode::ARB => self.arb(&param_modes),
+            Opcode::BRK => return CpuStatus::Finished,
+            _ => panic!("Invalid opcode: {}", opcode as i64),
+        }
+
+        CpuStatus::Running
+    }
+
+    fn decode(&mut self, instruction: i64) -> (Opcode, Vec<ParamMode>) {
+        let opcode = instruction % 100;
+        let param_modes = vec![
+            ((instruction / 100) % 10).into(),
+            ((instruction / 1000) % 10).into(),
+            ((instruction / 10000) % 10).into(),
+        ];
+        (opcode.into(), param_modes)
+    }
+
+    fn get_param(&self, idx: usize, param_modes: &Vec<ParamMode>) -> i64 {
+        let param = self.code[self.pc + idx + 1];
+        match param_modes[idx] {
+            ParamMode::Position => self.code[param as usize],
+            ParamMode::Immediate => param,
+            ParamMode::Relative => self.code[(param + self.relative_base) as usize],
+        }
+    }
+
+    fn dst(&self, idx: usize, param_modes: &Vec<ParamMode>) -> usize {
+        let dst = self.code[self.pc + idx + 1];
+        match param_modes[idx] {
+            ParamMode::Position => dst as usize,
+            ParamMode::Relative => (dst + self.relative_base) as usize,
+            ParamMode::Immediate => panic!("Invalid mode for dst"),
+        }
+    }
+
+    fn get_two_operands(&self, param_modes: &Vec<ParamMode>) -> (i64, i64) {
+        let p1 = self.get_param(0, param_modes);
+        let p2 = self.get_param(1, param_modes);
+        (p1, p2)
+    }
+
+    fn get_three_operands(&self, param_modes: &Vec<ParamMode>) -> (i64, i64, usize) {
+        let p1 = self.get_param(0, param_modes);
+        let p2 = self.get_param(1, param_modes);
+        let dst = self.dst(2, param_modes);
+        (p1, p2, dst as usize)
+    }
+
+    fn write_mem(&mut self, idx: usize, val: i64) {
+        if idx >= self.code.len() {
+            self.code.resize(idx + 1, 0);
+        }
+        self.code[idx] = val;
+    }
+
+    fn read_mem(&self, idx: usize) -> i64 {
+        if idx >= self.code.len() {
+            return 0;
+        }
+        self.code[idx]
+    }
+
+    fn add(&mut self, param_modes: &Vec<ParamMode>) {
+        let (o1, o2, dst) = self.get_three_operands(param_modes);
+        self.write_mem(dst, o1 + o2);
+        self.pc += 4;
+    }
+
+    fn mul(&mut self, param_modes: &Vec<ParamMode>) {
+        let (o1, o2, dst) = self.get_three_operands(param_modes);
+        self.write_mem(dst, o1 * o2);
+        self.pc += 4;
+    }
+
+    fn input(&mut self, param_modes: &Vec<ParamMode>) -> CpuStatus {
+        let dst = self.dst(0, param_modes);
+        match self.inputs.pop_front() {
+            Some(val) => { self.write_mem(dst, val); self.pc += 2},
+            None => return CpuStatus::WaitForInput,
         }
         CpuStatus::Running
     }
 
-    fn parse_code(&mut self, code: &mut i64, digits: i64) -> i64 {
-        let rem: i64 = *code % digits;
-        *code = *code / digits;
-        rem
+    fn output(&mut self, param_modes: &Vec<ParamMode>) -> CpuStatus {
+        let o1 = self.get_param(0, param_modes);
+        self.pc += 2;
+        CpuStatus::Output(o1)
     }
 
-    fn get_operand_by_mode(&mut self, mode: i64, op_idx: usize) -> i64 {
-        match mode {
-            0 => {
-                let idx = self.code[self.pc + op_idx] as usize;
-                self.ensure_memory(idx);
-                self.code[idx]
-            }
-            1 => self.code[self.pc + op_idx],
-            2 => {
-                let idx = (self.code[self.pc + op_idx] + self.relative_base) as usize;
-                self.ensure_memory(idx);
-                self.code[idx]
-            }
-            _ => panic!("Unknown operand mode: {}", mode),
-        }
+    fn jit(&mut self, param_modes: &Vec<ParamMode>) {
+        let (o1, o2) = self.get_two_operands(param_modes);
+        self.pc = if o1 != 0 { o2 as usize } else { self.pc + 3 };
     }
 
-    fn get_address_by_mode(&mut self, mode: i64, op_idx: usize) -> usize {
-        let addr = match mode {
-            0 => self.code[self.pc + op_idx],
-            2 => self.code[self.pc + op_idx] + self.relative_base,
-            _ => panic!("Invalid mode for writing: {}", mode),
-        };
-        if addr < 0 {
-            panic!("Negative address encountered: {}", addr);
-        }
-        addr as usize
+    fn jif(&mut self, param_modes: &Vec<ParamMode>) {
+        let (o1, o2) = self.get_two_operands(param_modes);
+        self.pc = if o1 == 0 { o2 as usize } else { self.pc + 3 };
     }
 
-    fn ensure_memory(&mut self, idx: usize) {
-        if idx >= self.code.len() {
-            self.code.resize(idx + 1, 0);
-        }
+    fn lt(&mut self, param_modes: &Vec<ParamMode>) {
+        let (o1, o2, dst) = self.get_three_operands(param_modes);
+        self.write_mem(dst, if o1 < o2 { 1 } else { 0 });
+        self.pc += 4;
+    }
+
+    fn eq(&mut self, param_modes: &Vec<ParamMode>) {
+        let (o1, o2, dst) = self.get_three_operands(param_modes);
+        self.write_mem(dst, if o1 == o2 { 1 } else { 0 });
+        self.pc += 4;
+    }
+
+    fn arb(&mut self, param_modes: &Vec<ParamMode>) {
+        let o1 = self.get_param(0, param_modes);
+        self.relative_base += o1;
+        self.pc += 2;
     }
 }
